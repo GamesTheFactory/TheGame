@@ -1,0 +1,56 @@
+# Unity
+[Dd]ebug/
+[Dd]ebugPublic/
+[Dd]ist/
+[Dd]eploy/
+[Ll]ogs/
+
+# User-specific files
+[Tt]emp/
+[Tt]empSettings/
+[Ll]ibrary/
+.idea/
+.vscode/
+.vs/
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbs.db
+Thumbs.db
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Build results
+Build/
+Builds/
+
+# User-specific files
+*.user
+*.userprefs
+
+# Ignore JetBrains Rider files
+.idea/
+
+# VS Code config files
+.vscode/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Unity-generated file on crash reports
+sysinfo.txt
