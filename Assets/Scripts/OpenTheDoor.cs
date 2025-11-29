@@ -20,6 +20,8 @@ public class OpenTheDoor : MonoBehaviour
         if (doorCanBeOpened && Input.GetKey(KeyCode.E))
         {
             OpenCloseTheDoor();
+
+            doorCanBeOpened = false;
         }
 
        
@@ -97,8 +99,7 @@ public class OpenTheDoor : MonoBehaviour
             StartRotationOpen();
 
             doorOpened = true;
-        }    
-
+        }
 
         return doorOpened;
     }
