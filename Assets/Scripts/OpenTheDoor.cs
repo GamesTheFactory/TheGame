@@ -19,20 +19,10 @@ public class OpenTheDoor : MonoBehaviour
     {
         if (doorCanBeOpened && Input.GetKey(KeyCode.E))
         {
-            StartRotationOpen();
-
-            doorCanBeOpened = false;
-            doorCanBeClosed = true;
+            OpenCloseTheDoor();
         }
 
-        if (doorCanBeClosed && Input.GetKey(KeyCode.E))
-        {
-            StartRotationClose();
-
-            doorCanBeOpened = true;
-            doorCanBeClosed = false;
-        }
-
+       
 
     }
     // Llama a esta función para iniciar la rotación
@@ -93,4 +83,24 @@ public class OpenTheDoor : MonoBehaviour
 
         }
     }
+
+    bool OpenCloseTheDoor() 
+    {
+        if (doorOpened)
+        {
+            StartRotationClose();
+
+            doorOpened = false;
+        }
+        else 
+        {
+            StartRotationOpen();
+
+            doorOpened = true;
+        }    
+
+
+        return doorOpened;
+    }
+
 }
