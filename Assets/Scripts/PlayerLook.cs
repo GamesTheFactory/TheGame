@@ -1,36 +1,41 @@
-using UnityEngine;
+锘縰sing UnityEngine;
 
 public class PlayerLook : MonoBehaviour
 {
-    [Header("Sensibilidad del rat髇")]
+    [Header("Sensibilidad del rat贸n")]
     public float mouseSensitivity = 100f;
 
-    [Header("Referencias")]
-    public Transform playerBody; // El cuerpo del jugador (para girar Y)
-    public Transform playerCamera; // La c醡ara o cabeza (para girar X)
+    [Header("Suavizado")]
+    public float smoothTime = 0.05f; // cu谩nto tarda en alcanzar la rotaci贸n deseada
 
-    private float xRotation = 0f; // Rotaci髇 vertical
+    [Header("Referencias")]
+    public Transform playerBody;    // Cuerpo del jugador
+    public Transform playerCamera;  // C谩mara del jugador
+
+    private float xRotation = 0f;
+    private Vector2 currentMouseDelta;
+    private Vector2 currentMouseDeltaVelocity;
 
     void Start()
     {
-        // Bloquear el cursor al juego
         Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
-        // Obtener movimiento del rat髇
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+        // 1锔忊儯 Capturar movimiento del rat贸n
+        Vector2 targetMouseDelta = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * mouseSensitivity * Time.deltaTime;
 
-        // Rotaci髇 vertical (mirar arriba/abajo)
-        xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, -90f, 90f); // Limitar para no girar completo
+        // 2锔忊儯 Suavizado
+        currentMouseDelta = Vector2.SmoothDamp(currentMouseDelta, targetMouseDelta, ref currentMouseDeltaVelocity, smoothTime);
 
+        // 3锔忊儯 Rotaci贸n vertical (c谩mara)
+        xRotation -= currentMouseDelta.y;
+        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         playerCamera.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-        // Rotaci髇 horizontal (gira el cuerpo)
-        playerBody.Rotate(Vector3.up * mouseX);
+        // 4锔忊儯 Rotaci贸n horizontal (cuerpo)
+        playerBody.Rotate(Vector3.up * currentMouseDelta.x);
     }
 }
 
