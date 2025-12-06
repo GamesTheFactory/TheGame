@@ -1,8 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("Movement")]
     public float moveSpeed = 6f;
     public float gravity = -9.81f;
     public float jumpHeight = 2f;
@@ -10,31 +12,69 @@ public class PlayerMovement : MonoBehaviour
     private CharacterController controller;
     private Vector3 velocity;
 
-    void Start()
+    [Header("Input Actions")]
+    public InputAction moveAction;   // Vector2 (WASD / stick)
+    public InputAction jumpAction;   // Button (space / gamepad A)
+
+    private Vector2 moveInput;
+    private bool jumpPressed;
+
+    private void OnEnable()
+    {
+        moveAction.Enable();
+        jumpAction.Enable();
+    }
+
+    private void OnDisable()
+    {
+        moveAction.Disable();
+        jumpAction.Disable();
+    }
+
+    private void Start()
     {
         controller = GetComponent<CharacterController>();
     }
 
-    void Update()
+    private void Update()
     {
-        // Get input
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
+        ReadInput();
+        HandleMovement();
+        HandleJumpAndGravity();
+    }
 
-        // Move relative to player orientation
-        Vector3 move = transform.right * x + transform.forward * z;
+    void ReadInput()
+    {
+        // ⬇️ Lectura directa y eficiente del Input System
+        moveInput = moveAction.ReadValue<Vector2>();
+        jumpPressed = jumpAction.triggered;
+    }
+
+    void HandleMovement()
+    {
+        // Convertir input en dirección local
+        Vector3 move =
+            transform.right * moveInput.x +
+            transform.forward * moveInput.y;
 
         controller.Move(move * moveSpeed * Time.deltaTime);
+    }
 
-        // Apply gravity
+    void HandleJumpAndGravity()
+    {
+        // Cuando toca el suelo, reiniciamos velocidad vertical
         if (controller.isGrounded && velocity.y < 0)
-            velocity.y = -2f;   // keeps grounded
+            velocity.y = -2f;
 
-        if (Input.GetButtonDown("Jump") && controller.isGrounded)
+        // Salto
+        if (jumpPressed && controller.isGrounded)
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
+        // Gravedad
         velocity.y += gravity * Time.deltaTime;
+
         controller.Move(velocity * Time.deltaTime);
     }
 }
+
 
