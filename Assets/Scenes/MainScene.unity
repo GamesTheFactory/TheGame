@@ -239,15 +239,15 @@ MonoBehaviour:
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings:
-    - m_Name: 1D Axis
+    - m_Name: 2D Vector
       m_Id: 08e039aa-f2c1-48bf-9a86-c06201324a0b
-      m_Path: 1DAxis
+      m_Path: 2DVector
       m_Interactions: 
       m_Processors: 
       m_Groups: 
       m_Action: Jump
       m_Flags: 4
-    - m_Name: negative
+    - m_Name: Up
       m_Id: 7cc7fb11-fcd0-485b-89c9-ea40484e34f7
       m_Path: <Keyboard>/space
       m_Interactions: 
@@ -255,9 +255,25 @@ MonoBehaviour:
       m_Groups: 
       m_Action: Jump
       m_Flags: 8
-    - m_Name: positive
+    - m_Name: Down
       m_Id: 22b54ca5-d5f0-4090-a297-d45027b0e2fb
       m_Path: <Keyboard>/space
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Jump
+      m_Flags: 8
+    - m_Name: Left
+      m_Id: 1824818d-9b79-4d4c-ae2d-ddf914594f1f
+      m_Path: 
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Jump
+      m_Flags: 8
+    - m_Name: Right
+      m_Id: 2013269f-7da8-403d-867c-047af68bbded
+      m_Path: 
       m_Interactions: 
       m_Processors: 
       m_Groups: 
@@ -823,7 +839,7 @@ GameObject:
   - component: {fileID: 414460310}
   - component: {fileID: 414460309}
   m_Layer: 5
-  m_Name: Image
+  m_Name: CrossHair
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

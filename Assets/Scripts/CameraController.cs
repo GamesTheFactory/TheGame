@@ -7,6 +7,7 @@ public class CameraController : MonoBehaviour
     public Transform target;
     public Transform bossTarget;
 
+
     [Header("Settings")]
     public float mouseSensitivity = 120f;
     public float rotationSmoothTime = 0.05f;
