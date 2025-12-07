@@ -20,8 +20,9 @@ public class CameraController : MonoBehaviour
     public float bossEpicDistance = 6f;
 
     [Header("Offsets")]
-    public Vector3 normalOffset = new Vector3(0, 1.6f, 0);
-    public Vector3 aimOffset = new Vector3(0.5f, 1.6f, 0);
+    public Vector3 normalOffset = new Vector3(1.2f, 1.6f, 0);   // X=1.2 → cámara desplazada a la derecha
+    public Vector3 aimOffset = new Vector3(1.0f, 1.7f, 0);      // X menor → más cerca aún del jugador
+
     public Vector3 bossEpicOffset = new Vector3(0, 2.2f, 0);
 
     [Header("Collision")]
@@ -157,12 +158,24 @@ public class CameraController : MonoBehaviour
     // -------- POSITION ----------
     void UpdatePosition()
     {
-        Vector3 direction = transform.rotation * Vector3.back;
-        Vector3 desiredPos = target.position + currentOffset + direction * currentDistance;
+        // Calculamos la dirección hacia atrás (distancia de cámara)
+        Vector3 back = transform.rotation * Vector3.back;
 
+        // Offset lateral en espacio local — AA FEATURE
+        Vector3 right = transform.right;
+        Vector3 up = transform.up;
+
+        Vector3 localOffset =
+            right * currentOffset.x +
+            up * currentOffset.y +
+            Vector3.zero; // el offset.z lo maneja la distancia
+
+        // Posición final
+        Vector3 desiredPos = target.position + localOffset + back * currentDistance;
 
         transform.position = desiredPos;
     }
+
 
     // -------- COLLISION ----------
     void HandleCollision()
