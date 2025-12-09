@@ -67,8 +67,8 @@ public class CameraController_Fortnite : MonoBehaviour
         input.Player.Look.performed += OnLook;
         input.Player.Look.canceled += OnLook;
 
-        input.Player.Aim.performed += ctx => isAiming = true;
-        input.Player.Aim.canceled += ctx => isAiming = false;
+        input.Player.Aiming.performed += ctx => isAiming = true;
+        input.Player.Aiming.canceled += ctx => isAiming = false;
     }
 
     void OnDisable()

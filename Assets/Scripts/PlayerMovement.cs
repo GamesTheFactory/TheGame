@@ -23,7 +23,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Animator")]
     public Animator anim;
-    private string currentAnim = ""; // evita reproducir la misma animacion cada frame
+    private string currentAnim = "";
 
     private void OnEnable()
     {
@@ -61,7 +61,9 @@ public class PlayerMovement : MonoBehaviour
     {
         moveInput = moveAction.ReadValue<Vector2>();
         jumpPressed = jumpAction.triggered;
-        aimingPressed = aimAction.ReadValue<float>() > 0f;
+
+        // ARREGLADO → esto funciona SIEMPRE
+        aimingPressed = aimAction.IsPressed();
     }
 
     // ------------------------------------------------------
@@ -70,12 +72,16 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleMovement()
     {
+        // Reducir velocidad un 25% cuando se está apuntando
+        float finalSpeed = aimingPressed ? moveSpeed * 0.75f : moveSpeed;
+
         Vector3 move =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
 
-        controller.Move(move * moveSpeed * Time.deltaTime);
+        controller.Move(move * finalSpeed * Time.deltaTime);
     }
+
 
     void HandleJumpAndGravity()
     {
@@ -91,36 +97,66 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // ------------------------------------------------------
-    // ANIMATIONS (OPTIMIZED)
+    // ANIMATIONS (OPTIMIZED + AIMING FIXED)
     // ------------------------------------------------------
 
     void HandleAnimations()
     {
         string nextAnim = "Idle";
 
-        // PRIORIDAD 1: Aiming
+        bool isMoving =
+            Mathf.Abs(moveInput.x) > 0.1f ||
+            Mathf.Abs(moveInput.y) > 0.1f;
+
+        // --------------------------
+        // 1. AIMING LOGIC
+        // --------------------------
+
         if (aimingPressed)
         {
-            nextAnim = "Aiming";
+            if (!isMoving)
+            {
+                // Aiming quieto
+                nextAnim = "Aiming";
+            }
+            else
+            {
+                // Aiming + movimiento → usar animaciones de correr
+                if (moveInput.y > 0.1f)
+                    nextAnim = "Player_Running";   // W
+                else if (moveInput.y < -0.1f)
+                    nextAnim = "Run_Backward";     // S
+                else if (moveInput.x > 0.1f)
+                    nextAnim = "Run_Right";        // D
+                else if (moveInput.x < -0.1f)
+                    nextAnim = "Run_Left";         // A
+            }
         }
         else
         {
-            // PRIORIDAD 2: Movimiento con WASD
+            // --------------------------
+            // 2. LÓGICA NORMAL (sin Aiming)
+            // --------------------------
+
             if (moveInput.y > 0.1f)
-                nextAnim = "Player_Running";   // W
+                nextAnim = "Player_Running";
             else if (moveInput.y < -0.1f)
-                nextAnim = "Run_Backward";     // S
+                nextAnim = "Run_Backward";
             else if (moveInput.x > 0.1f)
-                nextAnim = "Run_Right";        // D
+                nextAnim = "Run_Right";
             else if (moveInput.x < -0.1f)
-                nextAnim = "Run_Left";         // A
+                nextAnim = "Run_Left";
         }
 
-        // Si la animación ya está activa → NO reproducirla de nuevo
+        // --------------------------
+        // 3. PREVENIR REPRODUCIR MISMA ANIMACIÓN
+        // --------------------------
+
         if (currentAnim == nextAnim)
             return;
 
         anim.Play(nextAnim);
         currentAnim = nextAnim;
     }
+
 }
