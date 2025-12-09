@@ -13,27 +13,36 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 velocity;
 
     [Header("Input Actions")]
-    public InputAction moveAction;   // Vector2 (WASD / stick)
-    public InputAction jumpAction;   // Button (space / gamepad A)
+    public InputAction moveAction;
+    public InputAction jumpAction;
+    public InputAction aimAction;
 
     private Vector2 moveInput;
     private bool jumpPressed;
+    private bool aimingPressed;
+
+    [Header("Animator")]
+    public Animator anim;
+    private string currentAnim = ""; // evita reproducir la misma animacion cada frame
 
     private void OnEnable()
     {
         moveAction.Enable();
         jumpAction.Enable();
+        aimAction.Enable();
     }
 
     private void OnDisable()
     {
         moveAction.Disable();
         jumpAction.Disable();
+        aimAction.Disable();
     }
 
     private void Start()
     {
         controller = GetComponent<CharacterController>();
+        anim = GetComponentInChildren<Animator>();
     }
 
     private void Update()
@@ -41,18 +50,26 @@ public class PlayerMovement : MonoBehaviour
         ReadInput();
         HandleMovement();
         HandleJumpAndGravity();
+        HandleAnimations();
     }
+
+    // ------------------------------------------------------
+    // INPUT
+    // ------------------------------------------------------
 
     void ReadInput()
     {
-        // ⬇️ Lectura directa y eficiente del Input System
         moveInput = moveAction.ReadValue<Vector2>();
         jumpPressed = jumpAction.triggered;
+        aimingPressed = aimAction.ReadValue<float>() > 0f;
     }
+
+    // ------------------------------------------------------
+    // MOVEMENT
+    // ------------------------------------------------------
 
     void HandleMovement()
     {
-        // Convertir input en dirección local
         Vector3 move =
             transform.right * moveInput.x +
             transform.forward * moveInput.y;
@@ -62,19 +79,48 @@ public class PlayerMovement : MonoBehaviour
 
     void HandleJumpAndGravity()
     {
-        // Cuando toca el suelo, reiniciamos velocidad vertical
-        if (controller.isGrounded && velocity.y < 0)
+        if (controller.isGrounded && velocity.y < 0f)
             velocity.y = -2f;
 
-        // Salto
         if (jumpPressed && controller.isGrounded)
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
-        // Gravedad
         velocity.y += gravity * Time.deltaTime;
 
         controller.Move(velocity * Time.deltaTime);
     }
+
+    // ------------------------------------------------------
+    // ANIMATIONS (OPTIMIZED)
+    // ------------------------------------------------------
+
+    void HandleAnimations()
+    {
+        string nextAnim = "Idle";
+
+        // PRIORIDAD 1: Aiming
+        if (aimingPressed)
+        {
+            nextAnim = "Aiming";
+        }
+        else
+        {
+            // PRIORIDAD 2: Movimiento con WASD
+            if (moveInput.y > 0.1f)
+                nextAnim = "Player_Running";   // W
+            else if (moveInput.y < -0.1f)
+                nextAnim = "Run_Backward";     // S
+            else if (moveInput.x > 0.1f)
+                nextAnim = "Run_Right";        // D
+            else if (moveInput.x < -0.1f)
+                nextAnim = "Run_Left";         // A
+        }
+
+        // Si la animación ya está activa → NO reproducirla de nuevo
+        if (currentAnim == nextAnim)
+            return;
+
+        anim.Play(nextAnim);
+        currentAnim = nextAnim;
+    }
 }
-
-

@@ -280,6 +280,16 @@ MonoBehaviour:
       m_Action: Jump
       m_Flags: 8
     m_Flags: 0
+  aimAction:
+    m_Name: 
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 65163098-ef40-4aa4-abb1-c81c1ea1f5e9
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  anim: {fileID: 0}
 --- !u!136 &67623594
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1389,6 +1399,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: e2c4e1a4323c9ba49a030263e843946c, type: 2}
+    - target: {fileID: 5192421376145789895, guid: e666ab80a33b59c4abddc6f34860c1b9, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
