@@ -73,7 +73,7 @@ public class PlayerMovement : MonoBehaviour
     void HandleMovement()
     {
         // Reducir velocidad un 25% cuando se está apuntando
-        float finalSpeed = aimingPressed ? moveSpeed * 0.75f : moveSpeed;
+        float finalSpeed = aimingPressed ? moveSpeed * 0.5f : moveSpeed;
 
         Vector3 move =
             transform.right * moveInput.x +
