@@ -49,6 +49,7 @@ public class PlayerMovement : MonoBehaviour
     {
         ReadInput();
         HandleMovement();
+        AlignMovementDirection();
         HandleJumpAndGravity();
         HandleAnimations();
     }
@@ -158,5 +159,30 @@ public class PlayerMovement : MonoBehaviour
         anim.Play(nextAnim);
         currentAnim = nextAnim;
     }
+
+    void AlignMovementDirection()
+    {
+        // No rotar si no hay movimiento
+        if (moveInput.sqrMagnitude < 0.1f)
+            return;
+
+        // Solo diagonales hacia delante
+        if (moveInput.y > 0.1f && Mathf.Abs(moveInput.x) > 0.1f)
+        {
+            Vector3 moveDir = transform.forward * moveInput.y + transform.right * moveInput.x;
+            moveDir.y = 0;
+
+            if (moveDir.sqrMagnitude < 0.001f)
+                return;
+
+            Quaternion targetRot = Quaternion.LookRotation(moveDir);
+            float rotateSpeed = 15f;
+
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotateSpeed);
+        }
+
+        // Todo lo demás: no gira
+    }
+
 
 }
