@@ -1,63 +1,69 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CameraController : MonoBehaviour
+public class CameraController_Fortnite : MonoBehaviour
 {
     [Header("References")]
-    public Transform target;
+    public Transform target;          // Player
+    public Transform cameraPivot;     // Se mueve con la posición del player
     public Transform bossTarget;
 
+    private InputSystem_Actions input;
 
-    [Header("Settings")]
-    public float mouseSensitivity = 120f;
-    public float rotationSmoothTime = 0.05f;
+    [Header("Camera Settings")]
+    public float sensitivity = 120f;
     public float minPitch = -25f;
     public float maxPitch = 65f;
 
-    [Header("Camera Distances")]
+    [Header("FOV")]
+    public Camera cam;
+    public float normalFOV = 74f;
+    public float aimFOV = 62f;
+
+    [Header("Distances")]
     public float normalDistance = 5f;
     public float aimDistance = 3.2f;
-    public float bossEpicDistance = 6f;
+    public float epicDistance = 6f;
 
-    [Header("Offsets")]
-    public Vector3 normalOffset = new Vector3(1.2f, 1.6f, 0);   // X=1.2 → cámara desplazada a la derecha
-    public Vector3 aimOffset = new Vector3(1.0f, 1.7f, 0);      // X menor → más cerca aún del jugador
-
-    public Vector3 bossEpicOffset = new Vector3(0, 2.2f, 0);
+    [Header("Offsets (relative to pivot)")]
+    public Vector3 normalOffset = new Vector3(1.3f, 0.30f, 0f);
+    public Vector3 aimOffset = new Vector3(0.55f, 0.18f, 0f);
+    public Vector3 epicOffset = new Vector3(0.0f, 0.45f, 0f);
 
     [Header("Collision")]
     public LayerMask collisionMask;
-    public float collisionRadius = 0.25f;
+    public float sphereRadius = 0.25f;
     public float collisionSmooth = 0.05f;
 
-    [Header("Debug State")]
-    public bool isAiming = false;
-
-    // Private internals
-    private InputSystem_Actions input;
+    // Internals
+    private bool isAiming = false;
     private float yaw;
     private float pitch;
     private Vector2 lookInput;
-    private Vector3 currentRotation;
-    private Vector3 rotationSmoothVelocity;
 
-    private float currentDistance;
-    private float targetDistance;
-    private Vector3 targetOffset;
-
-    // For AAA stabilization
-    private Vector3 smoothedCamForward;
+    private float currentDist;
+    private float targetDist;
 
     private Vector3 currentOffset;
+    private Vector3 targetOffset;
+
+    private Vector3 pivotForward;  // Dirección suavizada del pivot
+
+    private Vector2 smoothLook;
+    private Vector2 smoothVelocity;
+    public float lookSmooth = 0.05f;   // menor = más fluido (no lag) 
 
 
+    // ---------------------------------------------
     void Awake()
     {
         input = new InputSystem_Actions();
     }
+
     void OnEnable()
     {
         input.Enable();
+
         input.Player.Look.performed += OnLook;
         input.Player.Look.canceled += OnLook;
 
@@ -69,146 +75,145 @@ public class CameraController : MonoBehaviour
     {
         input.Player.Look.performed -= OnLook;
         input.Player.Look.canceled -= OnLook;
+
         input.Disable();
     }
 
     void Start()
     {
-        currentOffset = normalOffset;
+        if (!cam) cam = Camera.main;
 
         yaw = transform.eulerAngles.y;
         pitch = 10f;
 
-        currentDistance = normalDistance;
-        targetDistance = normalDistance;
+        currentOffset = normalOffset;
         targetOffset = normalOffset;
 
-        smoothedCamForward = transform.forward;
+        currentDist = normalDistance;
+        targetDist = normalDistance;
+
+        pivotForward = transform.forward;
     }
 
+    // ---------------------------------------------
     void OnLook(InputAction.CallbackContext ctx)
     {
         lookInput = ctx.ReadValue<Vector2>();
     }
 
+    // ---------------------------------------------
     void LateUpdate()
     {
-        if (!target) return;
+        if (!cameraPivot) return;
 
-        UpdateCameraState();
+        FollowPlayer();     // << NUEVO: elimina jitter
+        UpdateState();
         UpdateRotation();
         UpdatePosition();
         HandleCollision();
+        UpdateFOV();
+        AlignPlayer();      // << mover al final evita vibración
     }
 
-    // -------- CAMERA STATE ----------
-    void UpdateCameraState()
+    // ---------------------------------------------
+    void FollowPlayer()
     {
-        // --- PRIORIDAD 1: AIMING ---
+        // CameraPivot sigue SOLO la posición del Player
+        cameraPivot.position = target.position;
+    }
+
+    // ---------------------------------------------
+    void UpdateState()
+    {
         if (isAiming)
         {
-            targetDistance = aimDistance;
+            targetDist = aimDistance;
             targetOffset = aimOffset;
         }
         else
         {
-            // --- PRIORIDAD 2: NORMAL ---
-            targetDistance = normalDistance;
+            targetDist = normalDistance;
             targetOffset = normalOffset;
 
-            // --- PRIORIDAD 3: MODO ÉPICO (solo si NO apuntas) ---
             if (bossTarget && Vector3.Distance(target.position, bossTarget.position) < 25f)
             {
-                targetDistance = bossEpicDistance;
-                targetOffset = bossEpicOffset;
+                targetDist = epicDistance;
+                targetOffset = epicOffset;
             }
         }
 
-        // --- INTERPOLACIÓN SUAVE (AAA) ---
-
-        // Distancia suave
-        currentDistance = Mathf.Lerp(currentDistance, targetDistance, Time.deltaTime * 8f);
-
-        // Offset suave
+        currentDist = Mathf.Lerp(currentDist, targetDist, Time.deltaTime * 8f);
         currentOffset = Vector3.Lerp(currentOffset, targetOffset, Time.deltaTime * 10f);
     }
 
-
-
-    // -------- ROTATION ----------
+    // ---------------------------------------------
     void UpdateRotation()
     {
-        yaw += lookInput.x * mouseSensitivity * Time.deltaTime;
-        pitch -= lookInput.y * mouseSensitivity * Time.deltaTime;
+        // 1. Suavizar la lectura del ratón (no la rotación)
+        smoothLook = Vector2.SmoothDamp(smoothLook, lookInput, ref smoothVelocity, lookSmooth);
+
+        // 2. Aplicar suavizado a yaw/pitch
+        yaw += smoothLook.x * sensitivity * Time.deltaTime;
+        pitch -= smoothLook.y * sensitivity * Time.deltaTime;
         pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
 
-        Vector3 targetRot = new Vector3(pitch, yaw);
-        currentRotation = Vector3.SmoothDamp(currentRotation, targetRot, ref rotationSmoothVelocity, rotationSmoothTime);
+        // 3. Rotación directa ya no se ve a saltos
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0);
 
-        transform.rotation = Quaternion.Euler(currentRotation);
-
-        // AAA stabilization for player orientation
-        Vector3 flat = transform.forward;
-        flat.y = 0;
-        flat.Normalize();
-
-        smoothedCamForward = Vector3.Lerp(smoothedCamForward, flat, Time.deltaTime * 20f);
+        // 4. Pivot forward sin jitter
+        pivotForward = new Vector3(transform.forward.x, 0, transform.forward.z).normalized;
     }
 
-    // -------- POSITION ----------
+
+    // ---------------------------------------------
     void UpdatePosition()
     {
-        // Calculamos la dirección hacia atrás (distancia de cámara)
         Vector3 back = transform.rotation * Vector3.back;
-
-        // Offset lateral en espacio local — AA FEATURE
         Vector3 right = transform.right;
         Vector3 up = transform.up;
 
         Vector3 localOffset =
             right * currentOffset.x +
-            up * currentOffset.y +
-            Vector3.zero; // el offset.z lo maneja la distancia
+            up * currentOffset.y;
 
-        // Posición final
-        Vector3 desiredPos = target.position + localOffset + back * currentDistance;
+        Vector3 desiredPos = cameraPivot.position + localOffset + back * currentDist;
 
         transform.position = desiredPos;
     }
 
-
-    // -------- COLLISION ----------
+    // ---------------------------------------------
     void HandleCollision()
     {
-        Vector3 start = target.position + targetOffset;
-        Vector3 end = transform.position;
+        Vector3 start = cameraPivot.position;
+        Vector3 dir = (transform.position - start).normalized;
 
-        Vector3 dir = (end - start).normalized;
-
-        if (Physics.SphereCast(start, collisionRadius, dir, out RaycastHit hit, currentDistance, collisionMask))
+        if (Physics.SphereCast(start, sphereRadius, dir, out RaycastHit hit, currentDist, collisionMask))
         {
-            float correctedDistance = Mathf.Max(0.5f, hit.distance - 0.2f);
-            Vector3 correctedPos = start + dir * correctedDistance;
+            float fixedDist = Mathf.Max(0.5f, hit.distance - 0.15f);
+            Vector3 newPos = start + dir * fixedDist;
 
-            transform.position = Vector3.Lerp(transform.position, correctedPos, collisionSmooth);
+            transform.position = Vector3.Lerp(transform.position, newPos, collisionSmooth);
         }
     }
 
-    // -------- PLAYER ALIGN ----------
-    void FixedUpdate()
+    // ---------------------------------------------
+    void UpdateFOV()
     {
-        AlignPlayerWithCamera();
+        float fov = isAiming ? aimFOV : normalFOV;
+        cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, fov, Time.deltaTime * 10f);
     }
 
-    void AlignPlayerWithCamera()
+    // ---------------------------------------------
+    void AlignPlayer()
     {
         if (!target) return;
 
-        Vector3 dir = smoothedCamForward;
-        if (dir.sqrMagnitude < 0.01f) return;
+        Vector3 dir = pivotForward;
+        dir.y = 0;
 
-        Quaternion targetRot = Quaternion.LookRotation(dir);
-        target.rotation = Quaternion.Slerp(target.rotation, targetRot, Time.deltaTime * 12f);
+        if (dir.sqrMagnitude < 0.0001f) return;
+
+        Quaternion rot = Quaternion.LookRotation(dir);
+        target.rotation = Quaternion.Slerp(target.rotation, rot, Time.deltaTime * 15f);
     }
 }
-
