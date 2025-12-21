@@ -24,6 +24,7 @@ public class CameraController_Fortnite : MonoBehaviour
     public float normalDistance = 5f;
     public float aimDistance = 3.2f;
     public float epicDistance = 6f;
+    public float distanceToBossToEpicView;
 
     [Header("Offsets (relative to pivot)")]
     public Vector3 normalOffset = new Vector3(1.3f, 0.30f, 0f);
@@ -135,7 +136,7 @@ public class CameraController_Fortnite : MonoBehaviour
             targetDist = normalDistance;
             targetOffset = normalOffset;
 
-            if (bossTarget && Vector3.Distance(target.position, bossTarget.position) < 25f)
+            if (bossTarget && Vector3.Distance(target.position, bossTarget.position) < distanceToBossToEpicView)
             {
                 targetDist = epicDistance;
                 targetOffset = epicOffset;
